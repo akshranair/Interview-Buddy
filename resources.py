@@ -1,7 +1,7 @@
 def get_graphQL_uri():
     return "https://leetcode.com/graphql"
 
-def get_graphQL_context(skip):
+def get_graphQL_context(limit):
     query = """
         query problemsetQuestionList($categorySlug: String, $limit: Int, $skip: Int, $filters: QuestionListFilterInput) {
             problemsetQuestionList: questionList(
@@ -33,11 +33,11 @@ def get_graphQL_context(skip):
         }
         """
     variables = {
-    "categorySlug": "",
-    "skip": skip,
-    "limit": 1,
-    "filters": {}
-    }
+            "categorySlug": "algorithms",
+            "skip": 0,
+            "limit": limit,
+            "filters": {}
+        }
 
     headers = {
     "Content-Type": "application/json",
@@ -48,13 +48,6 @@ def get_graphQL_context(skip):
     return query, variables, headers
 
 def get_graphQL_slug_context(title_slug):
-    variables = {"titleSlug": title_slug}
-
-    headers = {
-        "Content-Type": "application/json",
-        "Referer": f"https://leetcode.com/problems/{title_slug}/"
-    }
-
     query = """
         query questionData($titleSlug: String!) {
             question(titleSlug: $titleSlug) {
@@ -85,5 +78,13 @@ def get_graphQL_slug_context(title_slug):
             }
         }
         """
+        
+    variables = {"titleSlug": title_slug}
+        
+    headers = {
+            "Content-Type": "application/json",
+            "Referer": f"https://leetcode.com/problems/{title_slug}/"
+        }
+        
 
     return query, variables, headers
