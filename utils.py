@@ -36,24 +36,6 @@ def get_all_problems():
     questions = data['data']['problemsetQuestionList']['questions']
     return questions
 
-def save_all_leetcode():
-    Build_LeetBank()
-    delete_leetBank_data()
-    questions = get_all_problems()
-    for question in questions:
-        if not question['paidOnly']:
-            titleSlug = question['titleSlug']
-            question_info = fetch_problem_details_graphql(titleSlug)
-
-            leetcode_id =  question_info['frontendQuestionId']
-            title = question['title']
-            difficulty = question['difficulty']
-            problem_statement = clean_html_text(question_info.get("description",""))
-            url = f"https://leetcode.com/problems/{titleSlug}"
-            topics = ", ".join(topic['name'] for topic in question_info['topicTags'])
-            hints = ", ".join(hint for hint in question_info['hints'])
-
-            write_leetBank(leetcode_id, problem_statement, title,titleSlug, difficulty, hints, topics, url) 
 
 def fetch_problem_details_graphql(title_slug):
     """

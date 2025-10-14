@@ -7,6 +7,7 @@ CREATE TABLE IF NOT EXISTS leetBank(
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         leetcode_id INTEGER UNIQUE, 
         problem_statement TEXT, 
+        title TEXT,
         title_slug TEXT,
         difficulty TEXT, 
         hints TEXT, 
@@ -16,9 +17,9 @@ CREATE TABLE IF NOT EXISTS leetBank(
 
 insert_leetbank = '''
 INSERT OR IGNORE INTO leetBank
-        (leetcode_id, problem_statement, title_slug,
+        (leetcode_id, problem_statement, title, title_slug,
         difficulty, hints, topics, url)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
 '''
 
 read_leetbank = '''
@@ -41,10 +42,10 @@ def delete_leetBank_data():
         cursor.execute("DELETE FROM sqlite_sequence WHERE name='leetBank'")
         conn.commit()
 
-def write_leetBank(leetcode_id, problem_statement, title_slug, difficulty, hints, topics, url):
+def write_leetBank(leetcode_id, problem_statement, title, title_slug, difficulty, hints, topics, url):
     with sqlite3.connect(DB) as conn:
         cursor = conn.cursor()
-        cursor.execute(insert_leetbank,(leetcode_id, problem_statement, title_slug, difficulty, hints, topics, url))
+        cursor.execute(insert_leetbank,(leetcode_id, problem_statement, title, title_slug, difficulty, hints, topics, url))
         conn.commit()
 
 def read_leetBank(id):
@@ -60,3 +61,9 @@ def Build_LeetBank():
         cursor.execute(create_leetBank)
         conn.commit()
     
+def find_total_problems():
+    with sqlite3.connect(DB) as conn:
+        cursor = conn.cursor()
+        cursor.execute("Select count(*) from leetbank")
+        total = cursor.fetchone()[0]
+        return total

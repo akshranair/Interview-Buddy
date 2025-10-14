@@ -1,17 +1,27 @@
 import gradio as gr
+from openai import OpenAI
+from dotenv import load_dotenv
+from get_problem import get_system_prompt
 from app_resources import get_APP_TITLE, get_company_selection_title, get_language_dropdown, get_language_selection_title, get_welcome_page_company_list,get_welcome_page_start_button,get_Welcome_page_with_title
-
+from get_problem import get_system_prompt, find_random_problem
 APP_NAME = "Interview Buddy"
 
 custom_css =  """.language-selector {
     margin-bottom: 16px;
 }"""
 
+load_dotenv(override=True)
+
 def start_interview(selected_language, selected_company):
     welcome = gr.update(visible=False)
     interview = gr.update(visible=True)
-    initial_chat = [(None, "Hello! I'm your AI interviewer. I'll be conducting a 45-minute coding interview with you today. Please introduce yourself")]
-    return welcome, interview, initial_chat
+
+    question = find_random_problem()
+    statement, hints, topics = question[2], question[6], question[7]
+
+    system_prompt = get_system_prompt(selected_company, statement, hints, topics)
+    initial_chat = [{"role": "assistant", "content": "Hello! I'm your AI interviewer. I'll be conducting a 45-minute coding interview with you today. Please introduce yourself."}]
+    return welcome, interview, initial_chat, system_prompt
 
 def get_Welcome_page_title():
     return get_Welcome_page_with_title(APP_NAME)
@@ -19,8 +29,17 @@ def get_Welcome_page_title():
 def get_app_title():
     return get_APP_TITLE(APP_NAME)
 
+def respond(message, history, prompt):
+    messages = [{"role":"system", "content": prompt}] + history + [{"role":"user", "content":message}]
+    openai = OpenAI()
+    responses = openai.chat.completions.create(
+        model = "gpt-4o-mini",
+        messages=messages
+    )
+    response = responses.choices[0].message.content
+    updated_history = history + [{"role":"user", "content":message}, {"role":"assistant", "content":response}]
 
-
+    return updated_history, ""
 
 def Display_Welcome_Screen():
     with gr.Column(elem_id="welcome-container", visible=True) as welcome_screen:
@@ -46,6 +65,7 @@ def Display_Interview_Screen():
                 gr.HTML('<div class="column-header"><span>Interviewer</span></div>')
                 with gr.Column(elem_classes="chatbot-container"):
                     chatbot = gr.Chatbot(
+                        type = "messages",
                         value = [],
                         height = 502,
                         show_label= False,
@@ -90,16 +110,19 @@ def Display_Interview_Screen():
             
 
 
-    return interview_screen, chatbot, msg, note_pad, code_editor, review_button
+    return interview_screen, chatbot, msg, note_pad, code_editor, review_button, send_chat_button
 
 with gr.Blocks(css = custom_css, title = "Interview-Buddy", theme = gr.themes.Soft()) as app:
+    system_prompt = gr.State("")
     welcome_screen, language_select, company_select, start_button = Display_Welcome_Screen()
-    interview_screen, chatbot, msg, note_pad, code_editor, review_button = Display_Interview_Screen()
+    interview_screen, chatbot, msg, note_pad, code_editor, review_button, send_chat_button = Display_Interview_Screen()
     start_button.click(
         start_interview,
         inputs = [language_select,company_select],
-        outputs=[welcome_screen, interview_screen, chatbot]
+        outputs=[welcome_screen, interview_screen, chatbot, system_prompt]
     )
+
+    msg.submit(respond, [msg, chatbot, system_prompt], [chatbot, msg])
    
 
 if __name__ == "__main__":
